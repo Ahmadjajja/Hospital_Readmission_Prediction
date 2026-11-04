@@ -1,0 +1,12 @@
+{
+  "arm": "patient",
+  "seed": 11,
+  "train_n": 79502,
+  "test_n": 19841,
+  "train_patients": 55992,
+  "test_patients": 13998,
+  "train_prevalence": 0.11383361424869815,
+  "test_prevalence": 0.11410715185726526,
+  "overlap_encounter_pct": 0.0,
+  "overlap_patients": 0
+}
