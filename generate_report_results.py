@@ -13,6 +13,7 @@ best=max(['L2','L1','RF','LGBM'],key=lambda n:mean('patient',n,'ap'))
 aps=[mean('patient',n,'ap') for n in ['L2','L1','RF','LGBM']]
 ov=s[s.arm=='encounter'].overlap_encounter_pct
 abstract=f'The four weighted models achieve mean patient-level AP between {min(aps):.3f} and {max(aps):.3f}; {NAMES[best]} has the highest mean. Encounter-level test sets contain {ov.mean():.1f}\\% encounters from patients represented in development data on average.'
+abstract += ' Encounter-level mean AP is modestly higher (+0.005 to +0.013), with a change in model ranking.'
 (P/'abstract_results.tex').write_text(abstract+'\n')
 parts=[r'\subsection{Completed experiments and performance}',
 'All ten outer partitions completed: 500 candidate fits, 50 selected model fits, and ten constant-reference evaluations. The exported metrics contain 60 evaluated model/protocol/seed combinations. Automated checks recompute metrics from predictions, verify labels against source records, and verify partition integrity. No convergence warnings were observed in the completed-run logs. Table~\\ref{tab:performance} and Fig.~\\ref{fig:comparison} summarize the main results. Values are preliminary benchmark findings, not clinical validation.',

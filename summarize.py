@@ -12,7 +12,7 @@ F=ROOT/'figures';F.mkdir(exist_ok=True)
 plt.rcParams.update({'font.family':'DejaVu Sans','font.size':9,'axes.spines.top':False,'axes.spines.right':False,'savefig.bbox':'tight'})
 def audit_figures():
  df,_,_=load();c=df.groupby('patient_nbr').size();groups=[(c==1).sum(),(c==2).sum(),c.between(3,5).sum(),(c>=6).sum()]
- fig,ax=plt.subplots(figsize=(3.35,2.0));ax.bar(['1','2','3–5','6+'],groups,color='#28688a');ax.set(xlabel='Encounters per patient',ylabel='Number of patients');ax.ticklabel_format(axis='y',style='sci',scilimits=(3,3))
+ fig,ax=plt.subplots(figsize=(3.35,2.0));ax.bar(['1','2','3–5','6+'],groups,color='#28688a');ax.set(xlabel='Encounters per patient',ylabel='Number of patients');ax.ticklabel_format(axis='y',style='plain',useOffset=False)
  for i,v in enumerate(groups):ax.text(i,v+1000,f'{v:,}',ha='center',fontsize=8)
  ax.set_ylim(0,max(groups)*1.22);fig.savefig(F/'patient_counts.pdf');plt.close(fig)
  fig,ax=plt.subplots(figsize=(7.1,2.45));fig.subplots_adjust(left=.01,right=.99,bottom=.1,top=.98);ax.set(xlim=(-.1,10),ylim=(0,3));ax.axis('off')
@@ -36,7 +36,7 @@ def results():
  ax.set(xticks=range(4),xticklabels=['L2 LR','L1 LR','RF','LightGBM'],ylabel='Average precision');ax.legend(fontsize=8);fig.savefig(F/'comparison.pdf');plt.close(fig)
  p=pd.read_csv(OUT/'predictions_patient_42.csv.gz');fig,ax=plt.subplots(figsize=(3.35,2.1))
  for n in ['L2','L2_unweighted','LGBM']:
-  true,pred=calibration_curve(p.y,p[n],n_bins=8,strategy='quantile');ax.plot(pred,true,'o-',ms=3,label=n)
+  true,pred=calibration_curve(p.y,p[n],n_bins=8,strategy='quantile');ax.plot(pred,true,'o-',ms=3,label={'L2':'Weighted L2 logistic','L2_unweighted':'Unweighted L2 logistic','LGBM':'LightGBM'}[n])
  ax.plot([0,1],[0,1],'--',color='gray',lw=.8);ax.set(xlabel='Mean predicted probability',ylabel='Observed positive fraction',xlim=(0,.8),ylim=(0,.8));ax.legend(fontsize=7);fig.savefig(F/'calibration.pdf');plt.close(fig)
  # Prespecified seed 42, paired cluster bootstrap, same patients across models.
  rng=np.random.default_rng(2026);ids,inv=np.unique(p.patient_nbr,return_inverse=True);records=[]
