@@ -21,6 +21,11 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
+\bibitem{emi}
+O.~G. Emi-Johnson and K.~J. Nkrumah, ``Predicting 30-day hospital readmission
+  in patients with diabetes using machine learning on electronic health record
+  data,'' \emph{Cureus}, vol.~17, no.~4, p. e82437, 2025.
+
 \bibitem{uci}
 \BIBentryALTinterwordspacing
 J.~Clore, K.~Cios, J.~DeShazo, and B.~Strack, ``{Diabetes 130-US Hospitals for
@@ -34,15 +39,20 @@ B.~Strack, J.~P. DeShazo, C.~Gennings, J.~L. Olmo, S.~Ventura, K.~J. Cios, and
   Analysis of 70,000 clinical database patient records,'' \emph{BioMed Research
   International}, vol. 2014, p. 781670, 2014.
 
-\bibitem{emi}
-O.~G. Emi-Johnson and K.~J. Nkrumah, ``Predicting 30-day hospital readmission
-  in patients with diabetes using machine learning on electronic health record
-  data,'' \emph{Cureus}, vol.~17, no.~4, p. e82437, 2025.
-
 \bibitem{afridi}
 A.~A. Afridi, M.~Usman, D.~J. Rubin, and M.~R.~R. Rana, ``A robust and
   explainable framework for predicting hospital readmission in patients with
   diabetes,'' \emph{Diabetology}, vol.~7, no.~10, p. 197, Oct. 2026.
+
+\bibitem{saeb}
+S.~Saeb, L.~Lonini, A.~Jayaraman, D.~C. Mohr, and K.~P. Kording, ``The need to
+  approximate the use-case in clinical machine learning,'' \emph{GigaScience},
+  vol.~6, no.~5, p. gix019, 2017.
+
+\bibitem{kapoor}
+S.~Kapoor and A.~Narayanan, ``Leakage and the reproducibility crisis in
+  machine-learning-based science,'' \emph{Patterns}, vol.~4, no.~9, p. 100804,
+  2023.
 
 \bibitem{saito}
 T.~Saito and M.~Rehmsmeier, ``The precision-recall plot is more informative

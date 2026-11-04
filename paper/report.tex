@@ -5,26 +5,29 @@
 \newcommand{\pending}{\textit{Planned}}
 \begin{document}
 \title{Evaluating 30-Day Hospital Readmission Prediction in Patients with Diabetes: Patient-Level Versus Encounter-Level Validation}
-\author{\IEEEauthorblockN{Muhammad Shehzore Hashmi, Ahmad Sultan, and Akshay Kumar Dosapati}
-\IEEEauthorblockA{Montana State University, Bozeman, Montana, USA\\
-CSCI 550 --- Progress Report 2}}
+\author{\IEEEauthorblockN{Muhammad Shehzore Hashmi}
+\IEEEauthorblockA{Electrical and Computer Engineering\\Montana State University\\Bozeman, Montana, USA\\\footnotesize muhammadshehz.hashmi@student.montana.edu}
+\and\IEEEauthorblockN{Ahmad Sultan}
+\IEEEauthorblockA{Gianforte School of Computing\\Montana State University\\Bozeman, Montana, USA\\\footnotesize ahmad.sultan@student.montana.edu}
+\and\IEEEauthorblockN{Akshay Kumar Dosapati}
+\IEEEauthorblockA{Gianforte School of Computing\\Montana State University\\Bozeman, Montana, USA\\\footnotesize akshay.dosapati@student.montana.edu}}
 \maketitle
 \begin{abstract}
-Performance estimates for readmission prediction depend on whether repeated encounters from the same patient can cross evaluation partitions. We investigate this dependence using the Diabetes 130-US Hospitals dataset. A reproducible audit identifies 99,343 eligible encounters from 69,990 patients after excluding death and hospice discharges; 11.39\% have the positive readmission label. We compare L2 and L1 logistic regression, random forest, and LightGBM under patient-disjoint and stratified encounter-level evaluation. Each protocol is repeated across five predefined seeds, with five-fold development-set validation and training-only preprocessing. Average precision is the primary outcome. \input{abstract_results.tex} These initial experiments quantify evaluation sensitivity without treating a difference between distinct test populations as causal evidence of leakage. Calibration correction, resampling, and detailed subgroup analyses remain planned. This cumulative manuscript reports completed implementation, responds to prior feedback, and defines the remaining analysis.
+Performance estimates for readmission prediction depend on whether repeated encounters from the same patient can cross evaluation partitions. We investigate this dependence using the Diabetes 130-US Hospitals dataset. A reproducible audit identifies 99,343 eligible encounters from 69,990 patients after excluding death and hospice discharges; 11.39\% have the positive readmission label. We compare L2 and L1 logistic regression, random forest, and LightGBM under patient-disjoint and stratified encounter-level evaluation. Each protocol is repeated across five predefined seeds, with five-fold development-set validation and training-only preprocessing. Average precision is the primary outcome. \input{abstract_results.tex} These initial experiments quantify evaluation sensitivity without treating a difference between distinct test populations as causal evidence of leakage. Calibration correction, resampling, and detailed subgroup analyses remain planned.
 \end{abstract}
 \begin{IEEEkeywords}
 readmission, diabetes, grouped validation, repeated encounters, average precision
 \end{IEEEkeywords}
 \section{Introduction}
-Hospital readmission prediction is a practical application of data mining to structured clinical records. At discharge, information about diagnoses, treatment, prior utilization, and the completed hospital stay could help identify encounters associated with a subsequent admission. Nevertheless, performance on a historical benchmark does not establish that a model will improve care. A useful initial objective is to determine what the available data and evaluation design actually support.
+Readmission within 30 days can increase healthcare costs and indicate difficulties with recovery, discharge planning, or follow-up care \cite{emi}. Patients with diabetes often have multiple diagnoses and repeated admissions, making risk assessment challenging. At discharge, identifying higher-risk encounters could help prioritize follow-up resources. Credible evaluation is therefore necessary before apparent predictive gains can inform care. We use historical clinical records to assess both prediction and the reliability of its evaluation.
 
 The Diabetes 130-US Hospitals dataset contains inpatient encounters collected during 1999--2008 \cite{uci,strack}. An encounter is not an independent patient: individuals may contribute several records. An encounter-level random split can therefore evaluate a mixture of previously represented and unseen patients, whereas a patient-level split evaluates individuals absent from development data. Removing patient identifiers from predictors does not remove this dependence, because clinical and utilization characteristics may recur across visits. Conversely, the presence of overlap alone does not quantify its effect on performance.
 
-Earlier work has examined clinical associations \cite{strack}, compared predictive algorithms \cite{emi}, and explicitly incorporated patient-level partitioning and training-only resampling \cite{afridi}. The practical need addressed here is a reproducible, repeated comparison of validation protocols for a fixed cohort and common model families. We do not claim a new algorithm or that grouped splitting itself is novel. Nor do we assume that encounter splitting must produce higher scores.
+Prior studies examine clinical associations \cite{strack}, predictive models \cite{emi}, and patient-level safeguards \cite{afridi}. We extend this work through repeated protocol comparisons on a fixed cohort.
 
 Our questions are: \textbf{RQ1}, how well do four established models rank positive encounters under patient-disjoint evaluation? \textbf{RQ2}, how do average precision and model rankings change under encounter-level evaluation across seeds? \textbf{RQ3}, how much patient overlap occurs, and how do probability quality and performance within seen/unseen patient subsets qualify the comparison? Prediction is defined at discharge, not at admission; the main target is generalization to unseen patients within this historical dataset.
 
-The specific contributions of this report are (1) a verified cohort and repeated-patient audit, including separate treatment of unperformed laboratory tests; (2) a reproducible comparison of four model families under two validation protocols and five seeds; and (3) an uncertainty-aware interpretation of overlap, ranking, and calibration. The proposed audience remains the IEEE Intermountain Engineering, Technology, and Computing Conference identified in Report 1; IEEE conference format is retained.
+The specific contributions of this report are (1) a verified cohort and repeated-patient audit, including separate treatment of unperformed laboratory tests; (2) a reproducible comparison of four model families under two validation protocols and five seeds; and (3) an uncertainty-aware interpretation of overlap, ranking, and calibration. The target audience remains the IEEE Intermountain Engineering, Technology, and Computing Conference.
 
 \section{Related Work}
 \subsection{Clinical analysis and predictive benchmarking}
@@ -33,19 +36,22 @@ Strack et al. \cite{strack} restricted their analysis to the first encounter per
 Emi-Johnson and Nkrumah \cite{emi} compare logistic regression, random forest, XGBoost, and a neural network using a stratified 80/20 split, class weighting, cross-validation, and SHAP. Patient-disjoint partitioning is not explicitly established in the reported splitting procedure. That is a reporting distinction, not proof that their implementation leaked information. Their work motivates model comparison, while our emphasis is partition sensitivity rather than cross-paper score superiority.
 
 \subsection{Leakage safeguards and the closest comparison}
-Afridi et al. \cite{afridi} explicitly describe patient-level partitioning, fold-specific preprocessing and feature selection, SMOTENC/class weighting, and SHAP/LIME explanations. Their analytical cohort contains 75,081 encounters, and their partition/training description specifies seed 42. These safeguards are prior work. Our addition is a repeated encounter-versus-patient comparison, measured overlap, and model-ranking stability on a consistently defined cohort. We do not attempt a numerical replication of their different cohort or neural architectures. Table~\ref{tab:literature} summarizes the methodological distinctions; ``not explicit'' means not established by the reported methods.
+Afridi et al. \cite{afridi} explicitly describe patient-level partitioning, fold-specific preprocessing and feature selection, SMOTENC/class weighting, and SHAP/LIME explanations. Their analytical cohort contains 75,081 encounters, and their partition/training description specifies seed 42. Our comparison adds repeated protocol evaluation, measured overlap and ranking stability on a fixed cohort (Table~\ref{tab:literature}).
 
 \begin{table*}[t]
 \caption{Comparison of relevant studies and this report. Missing reporting is not evidence of an incorrect implementation.}
 \label{tab:literature}\centering\small
-\begin{tabular}{p{2.25cm}p{3.25cm}p{3.65cm}p{3.65cm}p{2.65cm}}\toprule
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.25cm}>{\raggedright\arraybackslash}p{3.25cm}>{\raggedright\arraybackslash}p{3.65cm}>{\raggedright\arraybackslash}p{3.65cm}>{\raggedright\arraybackslash}p{2.65cm}}\toprule
 Study & Repeated patients & Validation & Leakage/imbalance handling & Relation to our study\\\midrule
-Strack et al. [2] & First encounter per patient retained & Association modeling; not the same predictive holdout comparison & Death/hospice exclusions; clinical covariate analysis & Dataset semantics and cohort rationale\\
-Emi-Johnson and Nkrumah [3] & Patient grouping not explicit in split description & Stratified 80/20; five-fold model tuning & Preprocessing pipeline and class weighting reported & Conventional predictive benchmark\\
-Afridi et al. [4] & Patient groups kept separate & Patient holdout; five-fold grouped validation; seed 42 specified & Training-fold preprocessing, selection and SMOTENC/weights & Closest framework; safeguards already established\\
+Strack et al. \cite{strack} & First encounter per patient retained & Association modeling; not the same predictive holdout comparison & Death/hospice exclusions; clinical covariate analysis & Dataset semantics and cohort rationale\\
+Emi-Johnson and Nkrumah \cite{emi} & Patient grouping not explicit in split description & Stratified 80/20; five-fold model tuning & Preprocessing pipeline and class weighting reported & Conventional predictive benchmark\\
+Afridi et al. \cite{afridi} & Patient groups kept separate & Patient holdout; five-fold grouped validation; seed 42 specified & Training-fold preprocessing, selection and SMOTENC/weights & Closest framework; safeguards already established\\
 This report & All eligible encounters retained & Two protocols, five seeds; matched search budgets & Training-only fitting; overlap assertions; no test resampling & Quantifies protocol sensitivity and ranking variability\\\bottomrule
 \end{tabular}
 \end{table*}
+
+\subsection{Validation matched to the intended use}
+Saeb et al. \cite{saeb} show why validation must reflect the clinical use case: records from the same subject can produce overly optimistic estimates for new-subject prediction. Kapoor and Narayanan \cite{kapoor} place such problems within a broader taxonomy of leakage and emphasize transparent computational evidence. Together, these studies motivate our grouped primary evaluation and explicit overlap diagnostic. Our contribution applies these principles to repeated diabetic encounters while retaining a record-level comparison to measure sensitivity. Random record partitioning also lacks the chronology needed to evaluate future visits from known patients.
 
 \subsection{Imbalance and evaluation}
 Precision--recall analysis is useful when positives are uncommon \cite{saito}. We operationalize it as non-interpolated average precision (AP), rather than trapezoidal PR area \cite{apdoc}. A constant-score reference makes test prevalence visible. Group-aware validation addresses dependence between observations from the same person \cite{groupdoc}. For imbalance, weighting and resampling are distinct choices: both can change the meaning of fitted probabilities, so ranking performance alone is insufficient. We include an unweighted logistic reference and Brier scores; SMOTENC through imbalanced-learn \cite{imblearn} remains a planned comparison. LightGBM \cite{lgbm} supplies a computationally feasible nonlinear model alongside random forest and regularized logistic regression.
@@ -54,7 +60,7 @@ Precision--recall analysis is useful when positives are uncommon \cite{saito}. W
 \subsection{Source, cohort, and outcome}
 We downloaded the public UCI files \cite{uci}, including their categorical-ID mapping, and recorded a SHA-256 checksum. The CSV has 101,766 rows and 50 columns: two identifiers, the outcome, and 47 candidate predictors. The unit of analysis is one inpatient encounter. The outcome is $y=1$ for \texttt{<30}, and $y=0$ for \texttt{>30} or \texttt{NO}; no additional readmission labels were inferred.
 
-Fixed eligibility rules exclude discharge codes 11, 13, 14, 19, 20, and 21 (death or hospice categories in the supplied mapping). They remove 2,423 rows, leaving 99,343 encounters, 69,990 patients, and 11,314 positives (11.39\%). Code 21 has no observed rows but is retained in the rule. All age categories and unknown/invalid gender records are retained; no unreported adult-only filter is applied. Transfers remain eligible in this version, with their discharge category represented as a predictor. This decision requires a later sensitivity analysis because transfers need not represent an ordinary community discharge.
+Fixed eligibility rules exclude discharge codes 11, 13, 14, 19, 20, and 21 (death or hospice categories in the supplied mapping). They remove 2,423 rows, leaving 99,343 encounters, 69,990 patients, and 11,314 positives (11.39\%). All age and gender categories are retained. Transfers remain eligible in this version, with their discharge category represented as a predictor. This decision requires a later sensitivity analysis because transfers need not represent an ordinary community discharge.
 
 \subsection{Completed quality audit}
 The original data contain zero exact duplicate rows, zero repeated encounter IDs, and zero duplicate rows after removing the two identifiers. Repeated patients are a separate phenomenon: 16,341 patients (23.35\% of eligible patients) contribute 45,694 encounters (46.00\% of eligible encounters). The median is one encounter, the 90th percentile two, the 95th three, the 99th six, and the maximum 40. Figure~\ref{fig:patients} shows the distribution. These observations support preserving patient groups rather than deleting repeat visits.
@@ -86,21 +92,21 @@ Patient and encounter IDs are used for grouping, assertions, and saved split man
 
 \section{Methodology and Implementation}
 \subsection{Models and objectives}
-A constant predictor outputs the development-set prevalence. L2 logistic regression is the main model baseline; L1 logistic regression evaluates sparse coefficient selection through an LASSO-type penalty \cite{lasso}. For both, class weights are $w_k=n/(2n_k)$ using only the current training labels. Logistic models minimize a regularized weighted binary log loss, with inverse penalty strength $C$ selected from $\{0.1,1\}$ for L2 and $\{0.01,0.1\}$ for L1. L1 and L2 penalties differ in whether coefficients are encouraged toward exact zero or smoothly shrunk. We use the liblinear solver and a 1,000-iteration limit. An otherwise equivalent unweighted L2 model provides a probability-quality reference.
+A constant predictor outputs the development-set prevalence. L2 logistic regression is the main model baseline; L1 logistic regression evaluates sparse coefficient selection through a LASSO-type penalty \cite{lasso}. For both, class weights are $w_k=n/(2n_k)$ using only the current training labels. Logistic models minimize a regularized weighted binary log loss, with inverse penalty strength $C$ selected from $\{0.1,1\}$ for L2 and $\{0.01,0.1\}$ for L1. L1 and L2 penalties differ in whether coefficients are encouraged toward exact zero or smoothly shrunk. We use the liblinear solver and a 1,000-iteration limit. An otherwise equivalent unweighted L2 model provides a probability-quality reference.
 
 Random forest \cite{rf} aggregates 100 trees with maximum depth 12 and square-root feature subsampling; minimum leaf size is selected from $\{5,20\}$. LightGBM uses 150 boosting rounds, learning rate 0.05, minimum leaf count 50, and leaves selected from $\{15,31\}$. Both use training-derived balanced class weights. These deliberately small, prespecified searches control runtime and provide equal two-candidate budgets rather than an exhaustive benchmark. No early stopping uses test data. Model configurations and selected values are exported per run.
 
 \subsection{Completed versus planned components}
 The data audit, semantic preprocessing, sparse encoding/scaling, four weighted models, unweighted logistic reference, two splitting protocols, repeated tuning/evaluation, and output generation are implemented. L1 performs embedded feature selection; no separate RFE step has been run. SMOTENC, post-hoc probability recalibration, SHAP/permutation interpretation, and discharge/subgroup ablations remain planned. Thus their benefits are not asserted in this report.
 
-The environment uses Python, NumPy, pandas, SciPy, scikit-learn, LightGBM, and Matplotlib \cite{numpy,pandas,scipy,sklearn,lgbm,mpl}. Exact installed versions, platform information, and the data checksum are stored with the results. Sparse encoding reduces memory use; random forest receives a dense float32 matrix for faster fitting. Model libraries are limited to two threads. A timing pilot motivated a narrower L1 search before test scoring; no test result guided this change. No GPU, external model API, or private clinical data is required. The repository supplies a dataset downloader, experiment runner, summaries, split manifests, predictions, and manuscript source:\\
+The completed run used Python 3.12.14, scikit-learn 1.8.0 and LightGBM 4.7.0. The environment uses Python, NumPy, pandas, SciPy, scikit-learn, LightGBM, and Matplotlib \cite{numpy,pandas,scipy,sklearn,lgbm,mpl}. Versions and the checksum are recorded. Sparse encoding reduces memory use; random forest receives a dense float32 matrix for faster fitting. Model libraries are limited to two threads. A timing pilot narrowed the L1 search before test scoring. The five seed jobs ran concurrently with two threads per model and an eight-core CPU quota. Logged outer-partition runtimes were 266--367 seconds (median 314 seconds); the longest seed job took 712 seconds for both protocols, approximately 12 minutes excluding setup and analysis. These are shared-resource wall times, not isolated model benchmarks. The repository provides code, aggregate results and manuscript source; encounter-level predictions and split manifests are generated locally:\\
 \url{https://github.com/Ahmadjajja/Hospital_Readmission_Prediction}.
 
 \section{Experimental Design}
 \subsection{Repeated outer splits and internal selection}
 For each seed in $\{11,23,42,67,101\}$, GroupShuffleSplit holds out 20\% of unique patients. All encounters of those patients enter the test set, so the fraction of encounters is only approximately 20\%. The comparison uses stratified random splitting of 20\% of encounters. Each arm independently creates five development folds: StratifiedGroupKFold for the patient arm and StratifiedKFold for the encounter arm. Assertions verify zero patient intersection in every primary outer and inner split.
 
-Each candidate is evaluated by mean fold AP. The selected candidate is refitted on the full development set. The F1-maximizing threshold is chosen from its pooled out-of-fold development predictions, then frozen for the test evaluation. These development scores are used for selection, not presented as unbiased generalization estimates. The same candidate sets and preprocessing rules are used across arms, but independently selected parameters may differ. This estimates the effect of the complete validation protocol rather than a pure causal effect of outer-split overlap. Test results do not feed back into tuning.
+Each candidate is evaluated by mean fold AP. The selected candidate is refitted on the full development set. The F1-maximizing threshold is chosen from its pooled out-of-fold development predictions, then frozen for the test evaluation.  The same candidate sets and preprocessing rules are used across arms, but independently selected parameters may differ. This estimates the effect of the complete validation protocol rather than a pure causal effect of outer-split overlap. Test results do not feed back into tuning.
 
 \subsection{Metrics and uncertainty}
 Average precision is computed as
@@ -118,34 +124,49 @@ For each encounter-split test set, we measure the fraction of test encounters wh
 \input{results_text.tex}
 
 \section{Discussion, Limitations, and Responsible Use}
-The central distinction is between generalizing to unseen patients and scoring a mixture of seen and unseen patients. An encounter-level score is not automatically invalid for every application, but it does not directly answer the unseen-patient question. Neither protocol simulates prospective deployment because the files lack usable chronology. The diagnostic comparison can reveal sensitivity; it cannot establish that overlap alone caused a score difference.
+Patient-level validation addresses unseen patients; encounter-level validation mixes seen and unseen patients. Without chronology, neither simulates prospective deployment, and their difference does not isolate a causal overlap effect.
 
 Cohort definitions differ from prior studies, including removal of first-encounter restrictions and retention of transfer discharges. Cross-paper performance rankings would therefore be misleading. The limited search spaces may favor some models, and repeated encounters give frequent users greater weight in encounter-level metrics. A patient-weighted sensitivity analysis is planned. Out-of-system readmissions may be unobserved, and historical practice, coding, and treatment patterns may not represent current care.
 
 UCI distributes the dataset under CC BY 4.0 \cite{uci}. The data are deidentified, but demographic fields remain sensitive; we make no reidentification attempt. The repository documents the source and license. Race, gender, and age categories may reflect uneven representation and measurement; subgroup calibration and error analysis remain unfinished. No fairness, causal, intervention-benefit, or clinical-readiness claim is made. Feature importance, when added, will describe model associations rather than treatment effects.
 
 \section{Response to Feedback and Updated Outline}
-Figure~\ref{fig:workflow} replaces the earlier ambiguous workflow with a full-width figure and a separate untouched-test branch. Learned preprocessing and L1 selection appear after splitting; planned resampling is explicitly training-only. Five predefined seeds and variability summaries address partition stability. Table~\ref{tab:literature} supplies the requested literature comparison and incorporates Afridi et al., distinguishing our protocol-comparison objective from their framework. The duplicate and encounter-frequency audit is now completed, and Table~\ref{tab:audit} distinguishes unperformed tests from unknown values. Completed and planned components are labeled, and references use a consistent numbered IEEE style. The research question and dataset remain unchanged; an unweighted logistic reference was added to clarify calibration effects.
+The workflow in Report 1, Fig. 1, is now Fig.~\ref{fig:workflow}; it is enlarged to full text width with larger readable labels and a separate untouched-test branch. Learned preprocessing and L1 selection appear after splitting; planned resampling is explicitly training-only. Five predefined seeds and variability summaries address partition stability. Table~\ref{tab:literature} supplies the requested literature comparison and incorporates Afridi et al., distinguishing our protocol-comparison objective from their framework. The duplicate and encounter-frequency audit is now completed, and Table~\ref{tab:audit} distinguishes unperformed tests from unknown values. Completed and planned components are labeled, and references use a consistent numbered IEEE style. The research question and dataset remain unchanged; an unweighted logistic reference was added to clarify calibration effects.
 
-The final paper outline remains: abstract; introduction; related work; data/preprocessing; methodology; experimental design; results; discussion; limitations/responsible use; conclusion; references. Sections I--VI now contain complete prose and initial results. The final Results section will add the imbalance ablation, probability calibration comparison, subgroup tables, and feature-importance figure. Discussion will integrate those outputs and assess consistency across seeds. The final Conclusion will report the supported scope of generalization and unresolved limitations. No favorable result is assumed for these pending sections.
-
-\section{Remaining Work and Responsibilities}
-The next milestone is Progress Report 3; its exact due date was not supplied. The operational schedule below uses target windows rather than claiming an instructor-approved deadline. Ahmad coordinates implementation and reproducibility; Muhammad Shehzore Hashmi coordinates validation and statistical checks; Akshay Kumar Dosapati coordinates literature synthesis and figures. These are planned coordination responsibilities, not a claim that any member independently completed a particular run. All members will review the code, source papers, model outputs, and manuscript.
-
-\begin{table}[t]\caption{Remaining work toward Report 3; dates are internal targets.}\label{tab:plan}\centering\footnotesize
-\begin{tabular}{p{1.05cm}p{4.2cm}p{2.15cm}}\toprule
-Target & Task and dependency & Coordinator\\\midrule
-Nov. 9--10 & Verify all runs and cohort rules; inspect transfer/unknown discharge categories & Shehzore, all\\
-Nov. 11--12 & Training-only SMOTENC comparison on a limited model set; requires mixed-type pipeline & Ahmad\\
-Nov. 13--14 & Calibration correction from development data; discharge and patient-weighted sensitivity & Ahmad, Shehzore\\
-Nov. 15--16 & Subgroup counts/errors and feature-importance figure; sufficient positives required & Akshay, all\\
-Before R3 & Integrate literature, ablations, interpretation, and final reproducibility review & All members\\\bottomrule
+Table~\ref{tab:outline} updates the complete manuscript outline and identifies evidence still needed.
+\begin{table}[t]\caption{Updated final-paper outline and evidence requirements.}\label{tab:outline}\centering\footnotesize
+\begin{tabular}{>{\raggedright\arraybackslash}p{1.65cm}>{\raggedright\arraybackslash}p{5.8cm}}\toprule
+Section & Content, evidence, and planned outputs\\\midrule
+Abstract & Update preliminary findings after remaining analyses.\\
+Introduction & Stable RQs and contributions; qualify scope with final evidence.\\
+Related work & Compare patient/record validation, leakage and calibration; extend Table I.\\
+Data & Verified cohort and missingness; retain audit table and encounter-frequency figure.\\
+Methods & Add training-only SMOTENC and calibration configurations.\\
+Experiments & Preserve seeds and grouping; specify sensitivity and subgroup protocols.\\
+Results & Existing AP/ROC tables; add imbalance/ablation table, subgroup table and feature-importance figure.\\
+Discussion & Interpret ranking changes, uncertainty and probability quality across protocols.\\
+Limitations & Historical cohort, dependence, missing chronology, representation and external validity.\\
+Conclusion & Answer all RQs using completed evidence.\\
+References & Verify citations and retain consistent IEEE entries.\\\bottomrule
 \end{tabular}\end{table}
 
-If resampling exceeds resources, restrict it to one model and report that scope. If subgroup positives are insufficient, report counts without unstable comparative claims. If no model improves materially, retain the negative finding. Any protocol changes after this report will be documented and distinguished from the current prespecified runs; reuse of these test sets for later exploratory analyses will not be represented as a new untouched confirmatory evaluation.
+\section{Remaining Work and Responsibilities}
+Table~\ref{tab:plan} prioritizes the remaining work toward Progress Report 3. Ahmad coordinates implementation and reproducibility; Muhammad Shehzore Hashmi coordinates validation and statistical checks; Akshay Kumar Dosapati coordinates literature synthesis and figures. All members will review the code, source papers, model outputs, and manuscript.
+
+\begin{table}[t]\caption{Remaining work toward Report 3; prioritized internal work windows after Report 2.}\label{tab:plan}\centering\footnotesize
+\begin{tabular}{p{1.05cm}p{4.2cm}p{2.15cm}}\toprule
+Target & Task and dependency & Coordinator\\\midrule
+Week 1 & Verify runs; review person-versus-record and calibration literature; extend comparison table & Shehzore, all\\
+Week 1--2 & Training-only SMOTENC comparison on a limited model set; requires mixed-type pipeline & Ahmad\\
+Week 2 & Calibration correction from development data; discharge and patient-weighted sensitivity & Ahmad, Shehzore\\
+Week 2--3 & Subgroup counts/errors and feature-importance figure; sufficient positives required & Akshay, all\\
+Before R3 & Integrate ablation/subgroup tables, calibration and importance figures; final review & All members\\\bottomrule
+\end{tabular}\end{table}
+
+If resources are limited, prioritize one-model resampling and calibration, then subgroup/interpretation analyses. Report small subgroup counts without unstable comparisons. Document protocol changes and label later reuse of current test sets as exploratory.
 
 \section{Preliminary Conclusion}
-The project has progressed from a blueprint to a verified audit and executable repeated evaluation. Repeated encounters are substantial, while duplicate records are absent under the checks performed. The implemented comparison now measures model performance and protocol variability with consistent safeguards. The final study will extend these initial findings with focused imbalance, calibration, and interpretation analyses rather than adding unsupported claims of clinical utility.
+Repeated-patient dependence is substantial, and encounter-level validation yields modestly higher AP and a different model ranking. LightGBM leads patient-level evaluation, while weighted probability estimates require further calibration analysis. These historical benchmark findings motivate the remaining sensitivity and interpretation work.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

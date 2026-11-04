@@ -59,4 +59,3 @@ Planned: SMOTENC, calibration correction, discharge/transfer and patient-weighte
 
 The initial sparse random-forest timing pilot was interrupted before producing final test results. Forest inputs were converted to dense float32 for faster fitting, with the same forest settings and study design. The L1 search was narrowed from C={0.1,1} to C={0.01,0.1} for runtime before final test scoring; L2 retains C={0.1,1}. The final run is identified by the per-seed logs; pilot `run.log` is retained only locally for provenance.
 
-Code and manuscript were prepared with AI assistance. The group must review source papers, implementation, outputs and authorship statements before submission and follow course requirements for disclosure. Coordination assignments in the report are planned responsibilities, not fabricated historical contribution statements.
