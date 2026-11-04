@@ -44,6 +44,16 @@ A.~A. Afridi, M.~Usman, D.~J. Rubin, and M.~R.~R. Rana, ``A robust and
   explainable framework for predicting hospital readmission in patients with
   diabetes,'' \emph{Diabetology}, vol.~7, no.~10, p. 197, Oct. 2026.
 
+\bibitem{saeb}
+S.~Saeb, L.~Lonini, A.~Jayaraman, D.~C. Mohr, and K.~P. Kording, ``The need to
+  approximate the use-case in clinical machine learning,'' \emph{GigaScience},
+  vol.~6, no.~5, p. gix019, 2017.
+
+\bibitem{kapoor}
+S.~Kapoor and A.~Narayanan, ``Leakage and the reproducibility crisis in
+  machine-learning-based science,'' \emph{Patterns}, vol.~4, no.~9, p. 100804,
+  2023.
+
 \bibitem{saito}
 T.~Saito and M.~Rehmsmeier, ``The precision-recall plot is more informative
   than the {ROC} plot when evaluating binary classifiers on imbalanced
