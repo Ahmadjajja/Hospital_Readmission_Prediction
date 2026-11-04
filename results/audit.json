@@ -1,0 +1,31 @@
+{
+  "raw_rows":101766,
+  "raw_patients":71518,
+  "raw_columns":50,
+  "raw_positive":11357,
+  "rows":99343,
+  "patients":69990,
+  "positive":11314,
+  "excluded":2423,
+  "exclude_codes":[
+    11,
+    13,
+    14,
+    19,
+    20,
+    21
+  ],
+  "exact_duplicates":0,
+  "duplicate_encounter_ids":0,
+  "duplicate_nonidentifier_rows":0,
+  "repeat_patients":16341,
+  "repeat_patient_encounters":45694,
+  "encounters_quantiles":{
+    "0.5":1.0,
+    "0.9":2.0,
+    "0.95":3.0,
+    "0.99":6.0,
+    "1.0":40.0
+  },
+  "sha256":"0689e7ec031237dc63031b938805c48377748761a3b26acab621567afa24df97"
+}

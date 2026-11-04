@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+data/
+*.aux
+*.log
+*.out
+*.blg
+paper/build.log
+.DS_Store
+results/predictions_*.csv.gz
+results/partition_*.csv.gz
