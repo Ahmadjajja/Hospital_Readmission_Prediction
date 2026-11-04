@@ -100,7 +100,7 @@ Random forest \cite{rf} aggregates 100 trees with maximum depth 12 and square-ro
 The data audit, semantic preprocessing, sparse encoding/scaling, four weighted models, unweighted logistic reference, two splitting protocols, repeated tuning/evaluation, and output generation are implemented. L1 performs embedded feature selection; no separate RFE step has been run. SMOTENC, post-hoc probability recalibration, SHAP/permutation interpretation, and discharge/subgroup ablations remain planned. Thus their benefits are not asserted in this report.
 
 The completed run used Python 3.12.14, scikit-learn 1.8.0 and LightGBM 4.7.0. The environment uses Python, NumPy, pandas, SciPy, scikit-learn, LightGBM, and Matplotlib \cite{numpy,pandas,scipy,sklearn,lgbm,mpl}. Versions and the checksum are recorded. Sparse encoding reduces memory use; random forest receives a dense float32 matrix for faster fitting. Model libraries are limited to two threads. A timing pilot narrowed the L1 search before test scoring. The five seed jobs ran concurrently with two threads per model and an eight-core CPU quota. Logged outer-partition runtimes were 266--367 seconds (median 314 seconds); the longest seed job took 712 seconds for both protocols, approximately 12 minutes excluding setup and analysis. These are shared-resource wall times, not isolated model benchmarks. The repository provides code, aggregate results and manuscript source; encounter-level predictions and split manifests are generated locally:\\
-\url{https://github.com/Ahmadjajja/Hospital_Readmission_Prediction/tree/progress-report-2}.
+\url{https://github.com/Ahmadjajja/Hospital_Readmission_Prediction}.
 
 \section{Experimental Design}
 \subsection{Repeated outer splits and internal selection}
@@ -167,9 +167,6 @@ If resources are limited, prioritize one-model resampling and calibration, then 
 
 \section{Preliminary Conclusion}
 Repeated-patient dependence is substantial, and encounter-level validation yields modestly higher AP and a different model ranking. LightGBM leads patient-level evaluation, while weighted probability estimates require further calibration analysis. These historical benchmark findings motivate the remaining sensitivity and interpretation work.
-
-\section*{AI Assistance Disclosure}
-ChatGPT assisted with code development, analysis scripting, literature retrieval, manuscript drafting and editing, and incorporating AI-assisted review feedback. Reported metrics were calculated from executed experiments and checked against saved predictions. Authors remain responsible for the submitted work.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
