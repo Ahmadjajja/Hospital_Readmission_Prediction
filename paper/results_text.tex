@@ -1,6 +1,6 @@
 \subsection{Completed experiments and performance}
 
-All ten outer partitions completed: 500 candidate fits, 50 selected model fits, and ten constant-reference evaluations. The exported metrics contain 60 evaluated model/protocol/seed combinations. Automated checks recompute metrics from predictions, verify labels against source records, and verify partition integrity. No convergence warnings were observed in the completed-run logs. Table~\ref{tab:performance} and Fig.~\ref{fig:comparison} summarize the main results. Values are preliminary benchmark findings, not clinical validation.
+All ten outer partitions (five seeds, two protocols) have been run, giving 60 evaluated model results. A verification script recomputes every reported metric from the saved predictions and checks labels and partitions against the source data. Table~\ref{tab:performance} and Fig.~\ref{fig:comparison} summarize the results. These are preliminary findings on a historical benchmark.
 
 \begin{table}[t]\caption{Test performance, mean $\pm$ sample SD across five seeds. Constant AP equals each test set\textquotesingle s positive fraction.}\label{tab:performance}\centering\footnotesize\begin{tabular}{llcc}\toprule Model & Split & AP & ROC-AUC\\\midrule
 
@@ -32,15 +32,15 @@ Constant & Encounter & 0.114 $\pm$ 0.000 & 0.500 $\pm$ 0.000 \\
 
 \begin{figure}[t]\centering\includegraphics[width=\columnwidth]{comparison.pdf}\caption{AP across five seeds. Points are individual runs; marks and error bars show means and sample standard deviations.}\label{fig:comparison}\end{figure}
 
-LightGBM has the highest mean patient-level AP (0.228), compared with 0.216 for weighted L2 and 0.112 for the constant reference. The encounter-minus-patient differences in mean AP are +0.0055 (L2 logistic), +0.0062 (L1 logistic), +0.0132 (Random forest), +0.0102 (LightGBM). These are descriptive differences across separately constructed test sets. They are not paired causal effects of overlap.
+All models perform well above the constant reference, but the absolute level is modest. LightGBM has the highest mean patient-level AP (0.228), compared with 0.216 for weighted L2 and 0.112 for the constant reference. Every model scores higher under encounter-level evaluation; the differences in mean AP are +0.0055 (L2 logistic), +0.0062 (L1 logistic), +0.0132 (Random forest), +0.0102 (LightGBM). Random forest shows the largest gap.
 
-\subsection{Overlap and conditional uncertainty}
+\subsection{Patient overlap and uncertainty}
 
-Patient-level holdouts have zero patient overlap by assertion. Encounter-level overlap ranges from 41.34\% to 42.10\% of test encounters (mean 41.70\%). Patient-arm test prevalence ranges from 10.99\% to 11.41\%; the corresponding test sizes range from 19,717 to 19,991. The constant-reference results make this variation explicit.
+By construction, patient-level holdouts share no patients with the development data. In the encounter-level holdouts, 41.34\% to 42.10\% of test encounters (mean 41.70\%) come from patients who also appear in development. Because the patient split holds out patients rather than encounters, its test sets vary slightly in size (19,717 to 19,991 encounters) and prevalence (10.99\% to 11.41\%), which the constant reference reflects.
 
-For LightGBM within encounter-level holdouts, mean AP is 0.279 for seen patients and 0.157 for unseen patients. Their mean positive fractions are 20.10\% and 5.16\%, respectively. The case-mix and prevalence difference prevents interpreting this subset contrast as an isolated overlap effect.
+Within the encounter-level holdouts, LightGBM reaches a mean AP of 0.279 on patients seen during development and 0.157 on unseen patients. The two groups also differ sharply in readmission rate (20.10\% versus 5.16\%). Seen patients are by definition repeat visitors, who are readmitted far more often, so this contrast mixes overlap with case mix.
 
-For the prespecified patient holdout at seed 42, paired AP differences relative to weighted L2 and their 95\% patient-bootstrap intervals are L1 logistic: -0.0010 [-0.0026, +0.0006]; Random forest: -0.0095 [-0.0169, -0.0021]; LightGBM: +0.0138 [+0.0073, +0.0214]. These conditional, unadjusted intervals complement rather than replace the repeated-seed summaries.
+For the seed-42 patient holdout, the paired AP differences relative to weighted L2, with 95\% patient-bootstrap intervals, are L1 logistic: -0.0010 [-0.0026, +0.0006]; Random forest: -0.0095 [-0.0169, -0.0021]; LightGBM: +0.0138 [+0.0073, +0.0214].
 
 \subsection{Thresholds and probability quality}
 
@@ -60,8 +60,10 @@ Constant & 0.000 & 0.000 & 0.000 & 0.099\\
 
 \bottomrule\end{tabular}\end{table}
 
-Table~\ref{tab:diagnostics} reports the precision--recall trade-off after development-only threshold selection. Unweighted L2 has mean Brier score 0.095, compared with 0.225 for weighted L2. The calibration diagnostic (Fig.~\ref{fig:calibration}) illustrates why class-weighted scores should not automatically be interpreted as calibrated risks. Brier score combines discrimination and calibration; a lower value alone does not establish perfect calibration. No probability correction has yet been fitted.
+Table~\ref{tab:diagnostics} shows the precision--recall trade-off at the thresholds chosen on development data. At these thresholds the models flag roughly half of the readmissions, and about one in five flagged encounters is a true readmission. Probability quality differs much more than ranking. The class-weighted models have Brier scores of about 0.22, worse than the constant reference (0.099), whereas unweighted L2 reaches 0.095 with almost the same AP. Fig.~\ref{fig:calibration} shows why: class weighting pushes predicted probabilities far above the observed readmission rates. These scores therefore cannot be read as risks until they are recalibrated, which is planned.
 
-\begin{figure}[t]\centering\includegraphics[width=\columnwidth]{calibration.pdf}\caption{Calibration diagnostic for the prespecified patient holdout, seed 42. Eight quantile bins; dashed line indicates ideal calibration. This is a diagnostic, not a fitted correction.}\label{fig:calibration}\end{figure}
+\begin{figure}[t]\centering\includegraphics[width=\columnwidth]{calibration.pdf}\caption{Calibration curves for the seed-42 patient holdout, using eight quantile bins. The dashed line marks perfect calibration.}\label{fig:calibration}\end{figure}
 
-Under the Report 1 decision rule, LightGBM improves on weighted L2 in the seed-42 patient holdout because its AP-difference interval excludes zero; random forest is worse and L1 is inconclusive. This inference is conditional on that holdout. Across seeds, the encounter-minus-patient gap is modest (+0.005 to +0.013 AP). Random forest ranks last under patient evaluation (0.208 AP), but approximately ties L2 under encounter evaluation (both round to 0.221). Weighted models have Brier scores near 0.22, worse than the constant reference (about 0.099), reinforcing the need for probability calibration before interpreting their outputs as risk.
+\subsection{Summary of initial findings}
+
+Report 1 defined a clear improvement over the baseline as a paired 95\% interval that excludes zero. On the seed-42 holdout, LightGBM meets this criterion, random forest is significantly worse, and L1 logistic regression is indistinguishable from L2. Across seeds, the gap between the two protocols is small (+0.006 to +0.013 AP), but it is large enough to change conclusions about model choice: random forest ranks last under patient evaluation (0.208 AP) yet ties L2 under encounter evaluation (both 0.221).
