@@ -9,3 +9,10 @@ paper/build.log
 .DS_Store
 results/predictions_*.csv.gz
 results/partition_*.csv.gz
+paper/report.bbl
+results/metrics_*.csv
+results/metrics_*.json
+results/split_*.json
+results/tuning_*.json
+results/category_counts.csv
+results/variable_summary.csv
